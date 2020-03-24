@@ -1,3 +1,4 @@
+from ipdb import set_trace as b
 import os
 import pandas as pd
 from bokeh.layouts import layout
@@ -6,8 +7,6 @@ from bokeh.models import (Button, ColumnDataSource, CustomJS, DataTable,
 from bokeh.plotting import figure, output_file, save, show
 from collections import OrderedDict
 from s3_ops import write_html_to_s3
-
-base = pd.read_csv('s3://graycannon.com/csvs/base.csv')
 
 titles = {
     'Confirmed': 'Confirmed Cases',
@@ -28,13 +27,13 @@ def make_plot(breakdown_df, metric):
     plot = figure(title=titles[metric], x_axis_type='datetime', plot_height=300, plot_width=width)
     plot.left[0].formatter.use_scientific = False
     plot.line('dt', metric, source=b_source, line_width=3, line_alpha=0.6)
-    plot.circle('dt', metric, source=b_source)
+    plot.circle('dt', metric, source=b_source, size=6)
     hover = HoverTool()
     hover.tooltips = OrderedDict([('Date', '@day'), (metric, '@{}'.format(metric))])
     plot.add_tools(hover)
     return plot
 
-def make_charts(breakdown, area, creds):
+def make_charts(breakdown, area, creds, base):
     if area == 'World':
         breakdown_df = base.groupby(by='day').sum().reset_index()
     else:
@@ -69,11 +68,16 @@ def make_charts(breakdown, area, creds):
     os.remove(filename)
 
 def run_make_charts(creds):
-    for country in base['Country/Region'].unique():
-        make_charts('Country/Region', country, creds)
+    if creds.get('env') == 'dev':
+        base = pd.read_csv('./dev_csv/base.csv')
+    else:
+        base = pd.read_csv('s3://graycannon.com/csvs/base.csv')
 
-    for locale in base['Province/State'].unique():
-        make_charts('Province/State', locale, creds)
+    for country in base.loc[base['day'] == base['day'].max(), 'Country/Region'].unique():
+        make_charts('Country/Region', country, creds, base)
 
-    make_charts('Country/Region', 'World', creds)
+    for locale in base.loc[base['day'] == base['day'].max(), 'Province/State'].unique():
+        make_charts('Province/State', locale, creds, base)
+
+    make_charts('Country/Region', 'World', creds, base)
 

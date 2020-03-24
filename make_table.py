@@ -8,10 +8,16 @@ from bokeh.plotting import output_file, save, show
 from s3_ops import write_html_to_s3
 
 def run_make_table(creds):
-    df = pd.read_csv('s3://graycannon.com/csvs/country_table.csv')
+    if creds.get('env') == 'dev':
+        df = pd.read_csv('./dev_csv/country_table.csv')
+    else:
+        df = pd.read_csv('s3://graycannon.com/csvs/country_table.csv')
     df['charts_page'] = './chart_pages/country_' + df['country_region'] + '.html'
 
-    df2 = pd.read_csv('s3://graycannon.com/csvs/locale_table.csv')
+    if creds.get('env') == 'dev':
+        df2 = pd.read_csv('./dev_csv/locale_table.csv')
+    else:
+        df2 = pd.read_csv('s3://graycannon.com/csvs/locale_table.csv')
     df2['charts_page'] = './chart_pages/locale_' + df2['locale'] + '.html'
 
     base = pd.read_csv('s3://graycannon.com/csvs/base.csv')

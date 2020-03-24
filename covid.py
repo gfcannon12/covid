@@ -1,3 +1,4 @@
+from ipdb import set_trace as b
 import pandas as pd
 import numpy as np
 from datetime import datetime
@@ -67,13 +68,13 @@ class DailyData:
     def get_country_rows(self, base):
         self.country_rows.append(self.make_row(base, 'World'))
         countries = base.groupby(by=['Country/Region', 'day']).sum().reset_index()
-        for country in countries['Country/Region'].unique():
+        for country in countries.loc[countries['day'] == self.focus_days['current_day'], 'Country/Region'].unique():
             country_df = countries.loc[countries['Country/Region']  == country]
             self.country_rows.append(self.make_row(country_df, country))
 
     def get_locale_rows(self, base):
         locales = base.groupby(by=['Province/State', 'day']).sum().reset_index()
-        for locale in locales['Province/State'].unique():
+        for locale in locales.loc[locales['day'] == self.focus_days['current_day'], 'Province/State'].unique():
             locale_df = locales.loc[locales['Province/State']  == locale]
             self.locale_rows.append(self.make_row(locale_df, locale))
 
@@ -94,6 +95,9 @@ class DailyData:
             try:
                 filename = f'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/{date}.csv'
                 day_df = pd.read_csv(filename)
+                day_df = day_df.rename(columns={'Country_Region': 'Country/Region', 'Province_State': 'Province/State'})
+                day_df['Country/Region'] = day_df['Country/Region'].str.replace(', ', ' - ')
+                day_df['Province/State'] = day_df['Province/State'].str.replace(', ', ' - ')
                 day_df['day'] = day
                 day_confirmed = day_df['Confirmed'].sum()
                 self.day_dfs.append(day_df)

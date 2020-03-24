@@ -32,7 +32,8 @@ cd docker_runtime
 #### Deploying to IBM Cloud https://cloud.ibm.com/functions/
 ```
 ibmcloud login
-ibmcloud target --cf
+ibmcloud target -g Default
+ibmcloud fn property set --namespace covid
 zip covid.zip covid.py make_charts.py make_table.py s3_ops.py download.js __main__.py
 ibmcloud fn action create UpdateCovid --docker gfcannon12/covid-runtime-1 covid.zip
 ibmcloud fn trigger create hourly --feed /whisk.system/alarms/alarm --param cron "0 * * * *"
@@ -45,5 +46,5 @@ ibmcloud fn action update UpdateCovid --docker gfcannon12/covid-runtime-1 covid.
 # Add S3 creds as trigger parameters
 ibmcloud fn trigger fire hourly
 ibmcloud fn activation poll UpdateCovid
-ibmcloud activation list UpdateCovid -f -l 1 
+ibmcloud fn activation list UpdateCovid -f -l 1 
 ```

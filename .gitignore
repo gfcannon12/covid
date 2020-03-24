@@ -2,3 +2,8 @@ env.sh
 .vscode
 *.pyc
 __pycache__
+dev_csv
+dev_html
+base.csv
+country_table.csv
+locale_table.csv
