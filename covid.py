@@ -32,10 +32,10 @@ class DailyData:
             confirmed['peak_new'] = self.world_peak_new
             confirmed['since_peak_new'] = self.days_since_world_peak
         else:
-            df['new'] = df['Confirmed'].diff()
-            confirmed['peak_new'] = df['new'].max()
+            df['new_cases'] = df['Confirmed'].diff()
+            confirmed['peak_new'] = df['new_cases'].max()
             confirmed['since_peak_new'] = np.nan
-            peak_days = df.loc[df['new'] == df['new'].max(), 'day'].values
+            peak_days = df.loc[df['new_cases'] == df['new_cases'].max(), 'day'].values
             if len(peak_days) == 0:
                 confirmed['since_peak_new'] = np.nan
             else:
@@ -50,19 +50,21 @@ class DailyData:
         table = pd.concat(rows)
         table.index = table.index.rename(idx_name)
         table = table.reset_index()
-        table['new'] = table['current_day'] - table['previous_day']
+        table['new_cases'] = table['current_day'] - table['previous_day']
         table['new_prev'] = table['previous_day'] - table['two_days_ago']
-        table['new_prev_prev'] = table['two_days_ago'] - table['three_days_ago']
-        table['new_5'] = table['current_day'] - table['five_days_ago']
-        table['new_5_prev'] = table['five_days_ago'] - table['ten_days_ago']
-        table['new_5_prev_prev'] = table['ten_days_ago'] - table['fifteen_days_ago']
-        table['growth_rate'] = (table['new'] - table['new_prev']) / table['new_prev']
-        table['growth_rate_prev'] = (table['new_prev'] - table['new_prev_prev']) / table['new_prev_prev']
-        table['growth_factor'] = table['growth_rate'] / table['growth_rate_prev']
-        table['growth_rate_5'] = (table['new_5'] - table['new_5_prev']) / table['new_5_prev']
-        table['growth_rate_5_prev'] = (table['new_5_prev'] - table['new_5_prev_prev']) / table['new_5_prev_prev']
-        table['growth_factor_5'] = table['growth_rate_5'] / table['growth_rate_5_prev']
-        table = table.sort_values('new', ascending=False)
+        table['new_week'] = table['current_day'] - table['one_week_ago']
+        table['new_week_prev'] = table['one_week_ago'] - table['two_weeks_ago']
+        table['growth_rate'] = round(((table['current_day'] - table['previous_day']) / table['previous_day']),2)
+        table['growth_factor'] = round((table['new_cases'] / table['new_prev']),2)
+        table['growth_rate_week'] = round(((table['current_day'] - table['one_week_ago']) / table['one_week_ago']),2)
+        table['growth_factor_week'] = round((table['new_week'] / table['new_week_prev']),2)
+        table.loc[table['growth_rate'].isin([-np.inf, np.inf]), 'growth_rate'] = None
+        table.loc[table['growth_factor'].isin([-np.inf, np.inf]), 'growth_factor'] = None
+        table.loc[table['growth_rate_week'].isin([-np.inf, np.inf]), 'growth_rate_week'] = None
+        table.loc[table['growth_factor_week'].isin([-np.inf, np.inf]), 'growth_factor_week'] = None
+        table.loc[table['growth_factor'] < 0, 'growth_factor'] = None
+        table.loc[table['growth_factor_week'] < 0, 'growth_factor_week'] = None
+        table = table.sort_values('new_cases', ascending=False)
         return table
 
     def get_country_rows(self, base):
@@ -80,13 +82,11 @@ class DailyData:
 
     def set_focus_days(self):
         self.focus_days = {
-                    "current_day": self.data_days[-1],
-                    "previous_day": self.data_days[-2],
-                    "two_days_ago": self.data_days[-3],
-                    "three_days_ago": self.data_days[-4],
-                    "five_days_ago": self.data_days[-6],
-                    "ten_days_ago": self.data_days[-11],
-                    "fifteen_days_ago": self.data_days[-16]
+            "current_day": self.data_days[-1],
+            "previous_day": self.data_days[-2],
+            "two_days_ago": self.data_days[-3],
+            "one_week_ago": self.data_days[-8],
+            "two_weeks_ago": self.data_days[-15],
         }
 
     def create_data_sets(self):
