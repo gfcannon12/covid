@@ -41,8 +41,8 @@ def run_make_table(creds):
         TableColumn(field="since_peak_new", title="Days Since Peak", formatter=NumberFormatter(format="0,0")),
         TableColumn(field="growth_rate", title="Daily Growth Rate", formatter=NumberFormatter(format="0,0.00")),
         TableColumn(field="growth_factor", title="Daily Growth Factor", formatter=NumberFormatter(format="0,0.00")),
-        TableColumn(field="growth_rate_week", title="Five Day Growth Rate", formatter=NumberFormatter(format="0,0.00")),
-        TableColumn(field="growth_factor_week", title="Five Day Growth Factor", formatter=NumberFormatter(format="0,0.00")),
+        TableColumn(field="growth_rate_week", title="Weekly Growth Rate", formatter=NumberFormatter(format="0,0.00")),
+        TableColumn(field="growth_factor_week", title="Weekly Growth Factor", formatter=NumberFormatter(format="0,0.00")),
         TableColumn(field="charts_page", title="Link to Charts", formatter=HTMLTemplateFormatter(template='<a href="<%= charts_page%>" target="_blank"><%= country_region %> Charts</a>'))
     ]
 

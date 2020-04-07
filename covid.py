@@ -64,7 +64,7 @@ class DailyData:
         table.loc[table['growth_factor_week'].isin([-np.inf, np.inf]), 'growth_factor_week'] = None
         table.loc[table['growth_factor'] < 0, 'growth_factor'] = None
         table.loc[table['growth_factor_week'] < 0, 'growth_factor_week'] = None
-        table = table.sort_values('new_cases', ascending=False)
+        table = table.sort_values('current_day', ascending=False)
         return table
 
     def get_country_rows(self, base):

@@ -7,13 +7,14 @@ from bokeh.models import (Button, ColumnDataSource, CustomJS, DataTable,
 from bokeh.plotting import figure, output_file, save, show
 from collections import OrderedDict
 from s3_ops import write_html_to_s3
+from datetime import timedelta
 
 titles = {
     'Confirmed': 'Confirmed Cases',
     'new': 'Daily New Cases',
     'growth_rate': 'Daily Growth Rate',
-    'new_5': 'New Cases Last 5 Days',
-    'growth_rate_5': 'Five Day Growth Rate'
+    'new_weekly': 'New Cases Last 7 Days',
+    'growth_rate_weekly': 'Weekly Growth Rate'
 }
 
 breakdown_names = {'Country/Region': 'country', 'Province/State': 'locale'}
@@ -23,6 +24,8 @@ def make_plot(breakdown_df, metric):
         width = 1200
     else:
         width = 600
+    if metric in ['growth_rate', 'growth_rate_weekly']:
+        breakdown_df = breakdown_df[breakdown_df['dt'] > breakdown_df['dt'].max() - timedelta(days=14)]
     b_source = ColumnDataSource(data=breakdown_df)
     plot = figure(title=titles[metric], x_axis_type='datetime', plot_height=300, plot_width=width)
     plot.left[0].formatter.use_scientific = False
@@ -41,16 +44,15 @@ def make_charts(breakdown, area, creds, base):
         breakdown_df = breakdown_df.loc[breakdown_df[breakdown] == area].copy()
     breakdown_df = breakdown_df.sort_values('day')
     breakdown_df['new'] = breakdown_df['Confirmed'].diff()
-    breakdown_df['growth_rate'] =  (breakdown_df['new'] - breakdown_df['new'].shift()) / breakdown_df['new'].shift()
-    breakdown_df['new_5'] = breakdown_df['Confirmed'].diff(5)
-    breakdown_df['new_5_prev'] = breakdown_df['Confirmed'].shift(5) - breakdown_df['Confirmed'].shift(10)
-    breakdown_df['growth_rate_5'] = (breakdown_df['new_5'] - breakdown_df['new_5_prev']) / breakdown_df['new_5_prev']
+    breakdown_df['growth_rate'] =  (breakdown_df['Confirmed'] - breakdown_df['Confirmed'].shift()) / breakdown_df['Confirmed'].shift()
+    breakdown_df['new_weekly'] = breakdown_df['Confirmed'].diff(7)
+    breakdown_df['growth_rate_weekly'] = (breakdown_df['Confirmed'] - breakdown_df['Confirmed'].shift(7)) / breakdown_df['Confirmed'].shift(7)
     breakdown_df['dt'] = pd.to_datetime(breakdown_df['day'])
     plot1 = make_plot(breakdown_df, 'Confirmed')
     plot2 = make_plot(breakdown_df, 'new')
     plot3 = make_plot(breakdown_df, 'growth_rate')
-    plot4 = make_plot(breakdown_df, 'new_5')
-    plot5 = make_plot(breakdown_df, 'growth_rate_5')
+    plot4 = make_plot(breakdown_df, 'new_weekly')
+    plot5 = make_plot(breakdown_df, 'growth_rate_weekly')
     chart_layout = layout(
         [plot1],
         [plot2, plot3],
@@ -62,7 +64,6 @@ def make_charts(breakdown, area, creds, base):
     if 'chart_pages' not in os.listdir('/tmp'):
         os.mkdir('/tmp/chart_pages')
     output_file(filename, title='{} Charts'.format(area))
-    # show(chart_layout)
     save(chart_layout)
     write_html_to_s3(filename, key, creds)
     os.remove(filename)
