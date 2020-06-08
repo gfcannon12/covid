@@ -19,7 +19,7 @@ class DailyData:
 
     def get_and_write_base(self):
         base = pd.concat(self.day_dfs, sort=False)
-        base = base.drop(columns=['Latitude', 'Longitude'])
+        base = base[['Country/Region', 'Province/State', 'Admin2', 'day', 'Confirmed']]
         base.loc[base['Country/Region'] == 'Mainland China', 'Country/Region'] = 'China'
         base = base.sort_values('day')
         write_csv_to_s3(base, 'base.csv', self.creds)
@@ -75,7 +75,8 @@ class DailyData:
             self.country_rows.append(self.make_row(country_df, country))
 
     def get_locale_rows(self, base):
-        locales = base.groupby(by=['Province/State', 'day']).sum().reset_index()
+        usa = base.loc[base['Country/Region'] == 'US'].copy()
+        locales = usa.groupby(by=['Province/State', 'day']).sum().reset_index()
         for locale in locales.loc[locales['day'] == self.focus_days['current_day'], 'Province/State'].unique():
             locale_df = locales.loc[locales['Province/State']  == locale]
             self.locale_rows.append(self.make_row(locale_df, locale))

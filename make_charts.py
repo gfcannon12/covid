@@ -77,7 +77,7 @@ def run_make_charts(creds):
     for country in base.loc[base['day'] == base['day'].max(), 'Country/Region'].unique():
         make_charts('Country/Region', country, creds, base)
 
-    for locale in base.loc[base['day'] == base['day'].max(), 'Province/State'].unique():
+    for locale in base.loc[(base['day'] == base['day'].max()) & (base['Country/Region'] == 'US'), 'Province/State'].unique():
         make_charts('Province/State', locale, creds, base)
 
     make_charts('Country/Region', 'World', creds, base)

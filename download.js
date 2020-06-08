@@ -7,7 +7,9 @@ function table_to_csv(source) {
         let row = [];
         for (let j = 0; j < columns.length; j++) {
             const column = columns[j]
-            row.push(source.data[column][i].toString())
+            if (source.data[column][i] == null) {
+                row.push(source.data[column][i])
+            } else row.push(source.data[column][i].toString())
         }
         lines.push(row.join(','))
     }
